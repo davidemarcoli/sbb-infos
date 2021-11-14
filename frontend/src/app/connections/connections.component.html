@@ -1,0 +1,57 @@
+<div class="container">
+  <div class="row">
+    <div class="col-lg-6">
+        <form [formGroup]="form" (ngSubmit)="onSubmit()">
+          <div class="row">
+            <div class="col-lg-6">
+              <label for="from">
+                From
+              </label>
+              <input class="form-control" id="from" type="text" formControlName="from">
+            </div>
+            <div class="col-lg-6">
+              <label for="to">
+                To
+              </label>
+              <input class="form-control" id="to" type="text" formControlName="to">
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-lg-9">
+              <label for="date">
+                Date
+              </label>
+              <input class="form-control" id="date" type="date" formControlName="date">
+            </div>
+            <div class="col-lg-3">
+              <button class="button btn-primary" [disabled]="form.status == 'INVALID'" type="submit">Search</button>
+            </div>
+          </div>
+          <br>
+
+        </form>
+    </div>
+    <div class="col-lg-6">
+      <table class="table" *ngIf="result">
+        <thead>
+        <tr>
+          <th scope="col">#</th>
+          <th scope="col">From</th>
+          <th scope="col">To</th>
+          <th scope="col">Length</th>
+          <th scope="col">Departure</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr *ngFor="let connection of result.connections; let i = index">
+          <th scope="row">{{i+1}}</th>
+          <td>{{ connection.from.location.name }}</td>
+          <td>{{ connection.to.location.name }}</td>
+          <td> {{ connection.duration }} </td>
+          <td> {{ connection.sections[0].journey.passList[0].departure }} </td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
