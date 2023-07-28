@@ -1,57 +1,113 @@
-<div class="container">
+<body>
+<form [formGroup]="form" (ngSubmit)="onFormSubmit()">
   <div class="row">
-    <div class="col-lg-6">
-        <form [formGroup]="form" (ngSubmit)="onSubmit()">
-          <div class="row">
-            <div class="col-lg-6">
-              <label for="from">
-                From
-              </label>
-              <input class="form-control" id="from" type="text" formControlName="from">
-            </div>
-            <div class="col-lg-6">
-              <label for="to">
-                To
-              </label>
-              <input class="form-control" id="to" type="text" formControlName="to">
-            </div>
-          </div>
-          <div class="row">
-            <div class="col-lg-9">
-              <label for="date">
-                Date
-              </label>
-              <input class="form-control" id="date" type="date" formControlName="date">
-            </div>
-            <div class="col-lg-3">
-              <button class="button btn-primary" [disabled]="form.status == 'INVALID'" type="submit">Search</button>
-            </div>
-          </div>
-          <br>
-
-        </form>
+    <div class="col-xs-6">
+      <div class="form-group">
+        <input formControlName="from" type="text" class="form-control" placeholder="From" autocapitalize="on" />
+        <p *ngIf="stationsFrom.length > 0">
+          Did you mean:
+          <a *ngFor="let station of stationsFrom; let isLast=last"
+             [routerLink]="['/connections', {from: station, to: form.get('to')?.value, datetime: form.get('datetime')?.value}]">
+            {{station}}{{isLast ? '' : ','}}
+          </a>
+        </p>
+      </div>
     </div>
-    <div class="col-lg-6">
-      <table class="table" *ngIf="result">
-        <thead>
-        <tr>
-          <th scope="col">#</th>
-          <th scope="col">From</th>
-          <th scope="col">To</th>
-          <th scope="col">Length</th>
-          <th scope="col">Departure</th>
-        </tr>
-        </thead>
-        <tbody>
-        <tr *ngFor="let connection of result.connections; let i = index">
-          <th scope="row">{{i+1}}</th>
-          <td>{{ connection.from.location.name }}</td>
-          <td>{{ connection.to.location.name }}</td>
-          <td> {{ connection.duration }} </td>
-          <td> {{ connection.sections[0].journey.passList[0].departure }} </td>
-        </tr>
-        </tbody>
-      </table>
+    <div class="col-xs-6">
+      <div class="form-group">
+        <input formControlName="to" type="text" class="form-control" placeholder="To" autocapitalize="on" autofocus />
+        <p *ngIf="stationsTo.length > 0">
+          Did you mean:
+          <a *ngFor="let station of stationsTo; let isLast=last"
+             [routerLink]="['/connections', {from: form.get('from')?.value, to: station, datetime: form.get('datetime')?.value}]">
+            {{station}}{{isLast ? '' : ','}}
+          </a>
+        </p>
+      </div>
     </div>
   </div>
-</div>
+  <div class="row">
+    <div class="col-xs-6">
+      <div class="form-group">
+        <input formControlName="datetime" type="datetime-local" class="form-control" placeholder="Date and time (optional)" step="300" />
+      </div>
+    </div>
+    <div class="col-xs-6">
+      <div class="form-group">
+        <input type="submit" class="btn btn-primary" value="Search" />
+        <button type="button" class="btn btn-link" (click)="onClear()">Clear</button>
+      </div>
+    </div>
+  </div>
+</form>
+
+
+<table *ngIf="search && connections" class="connections table">
+  <colgroup>
+    <col width="20%">
+    <col width="57%">
+    <col width="23%">
+  </colgroup>
+  <thead>
+  <tr>
+    <th>Time</th>
+    <th>Journey</th>
+    <th>
+      <span class="visible-xs-inline">Pl.</span> <span class="hidden-xs">Platform</span>
+    </th>
+  </tr>
+  </thead>
+<!--  {{connections}}-->
+  <tbody *ngFor="let connection of connections; let j = index">
+<!--  {{connection.connection.from.departure}}-->
+  <tr class="connection" [style.display]="connection.visible ? 'block' : 'none'" [attr.data-c]="j+1" (click)="onConnectionClick(j)">
+    <td>
+      {{ connection.connection.from.departure | date:'shortTime' }}
+      <span *ngIf="connection.connection.from.delay" style="color:#a20d0d">+{{connection.connection.from.delay}}</span>
+      <br>
+      {{ connection.connection.to.arrival | date:'shortTime' }}
+      <span *ngIf="connection.connection.to.delay" style="color:#a20d0d">+{{connection.connection.to.delay}}</span>
+    </td>
+    <td>
+      <!-- Here duration is formatted according to your PHP code. You may adjust if needed -->
+      {{ connection.connection.duration | formatDuration }}
+      <br>
+      <span class="muted">{{ connection.connection.products.join(', ') }}</span>
+    </td>
+    <td>
+      <!-- Replace platform information according to your data structure -->
+      {{ connection.connection.from.prognosis.platform || connection.connection.from.platform }}
+      <br>
+      <small *ngIf="+connection.connection.to.prognosis.capacity2nd>0" title="Expected occupancy 2nd class">
+        <span class="glyphicon glyphicon-user text-muted" *ngFor="let _ of [].constructor(connection.connection.to.prognosis.capacity2nd); let i = index"></span>
+        <span class="glyphicon glyphicon-user text-disabled" *ngFor="let _ of [].constructor(3 - +connection.connection.to.prognosis.capacity2nd)"></span>
+      </small>
+    </td>
+<!--    {{connection.connection.sections}}-->
+  </tr>
+  <ng-container *ngFor="let section of connection.connection.sections; let i=index">
+<!--    {{i}}-->
+    <tr class="section" [style.display]="connection.visible ? 'none' : 'block'">
+      <td rowspan="2">{{ section.departure.departure | date:'shortTime' }} <span *ngIf="section.departure.delay" style="color:#a20d0d">+{{section.departure.delay}}</span></td>
+      <td>{{ section.departure.station.name }}</td>
+      <td>{{ section.departure.prognosis.platform || section.departure.platform }}</td>
+    </tr>
+    <tr class="section" [style.display]="connection.visible ? 'none' : 'block'">
+      <td style="border-top:0;padding:4px 8px"><span class="muted">{{ section.journey ? section.journey.category + section.journey.number  : 'Walk' }}</span></td>
+      <td style="border-top:0;padding:4px 8px">
+        <small *ngIf="section.journey && section.journey.capacity2nd>0" title="Expected occupancy 2nd class">
+          <span class="glyphicon glyphicon-user text-muted" *ngFor="let _ of [].constructor(section.journey.capacity2nd); let i = index"></span>
+          <span class="glyphicon glyphicon-user text-disabled" *ngFor="let _ of [].constructor(3 - section.journey.capacity2nd)"></span>
+        </small>
+      </td>
+    </tr>
+    <tr class="section" [style.display]="connection.visible ? 'none' : 'block'">
+      <td style="border-top:0">{{ section.arrival.prognosis.arrival | date:'shortTime' }} <span *ngIf="section.arrival.delay" style="color:#a20d0d">+{{section.arrival.delay}}</span></td>
+      <td style="border-top:0">{{ section.arrival.station.name }}</td>
+      <td style="border-top:0">{{ section.arrival.prognosis.platform || section.arrival.prognosis.platform }}</td>
+    </tr>
+  </ng-container>
+  </tbody>
+</table>
+
+</body>

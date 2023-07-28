@@ -7,20 +7,26 @@ import { NavbarComponent } from './navbar/navbar.component';
 import { ConnectionsComponent } from './connections/connections.component';
 import {ReactiveFormsModule} from "@angular/forms";
 import {HttpClientModule} from "@angular/common/http";
+import {FormatDurationPipe} from "./connections/format-duration.pipe";
+import {TransportService} from "./services/transport.service";
 
 @NgModule({
   declarations: [
     AppComponent,
     NavbarComponent,
-    ConnectionsComponent
+    ConnectionsComponent,
+    FormatDurationPipe,
+
   ],
   imports: [
     BrowserModule,
     AppRoutingModule,
     HttpClientModule,
-    ReactiveFormsModule
+    ReactiveFormsModule,
   ],
-  providers: [],
+  providers: [
+    TransportService
+  ],
   bootstrap: [AppComponent]
 })
 export class AppModule { }
